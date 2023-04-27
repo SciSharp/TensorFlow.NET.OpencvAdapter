@@ -1,0 +1,97 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33424.131
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tensorflow.OpencvAdapter", "Tensorflow.NET.OpencvAdapter\Tensorflow.OpencvAdapter.csproj", "{674EEB91-C749-4E60-A634-A1CF2F9EBA57}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenCvSharp", "..\opencvsharp\src\OpenCvSharp\OpenCvSharp.csproj", "{CF348AB5-8DAD-4813-8BC1-3CB964A51603}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tensorflow.Binding", "..\TensorFlow.NET\src\TensorFlowNET.Core\Tensorflow.Binding.csproj", "{C01ACE68-325B-4503-B0B1-4597EAEB1506}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tensorflow.OpencvAdapter.Unittest", "Tensorflow.OpencvAdapter.Unittest\Tensorflow.OpencvAdapter.Unittest.csproj", "{D73867B1-4622-4ADF-8AF2-B6D74AC71F3A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		GPU|Any CPU = GPU|Any CPU
+		GPU|x64 = GPU|x64
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release-JP|Any CPU = Release-JP|Any CPU
+		Release-JP|x64 = Release-JP|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{674EEB91-C749-4E60-A634-A1CF2F9EBA57}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{674EEB91-C749-4E60-A634-A1CF2F9EBA57}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{674EEB91-C749-4E60-A634-A1CF2F9EBA57}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{674EEB91-C749-4E60-A634-A1CF2F9EBA57}.Debug|x64.Build.0 = Debug|Any CPU
+		{674EEB91-C749-4E60-A634-A1CF2F9EBA57}.GPU|Any CPU.ActiveCfg = Debug|Any CPU
+		{674EEB91-C749-4E60-A634-A1CF2F9EBA57}.GPU|Any CPU.Build.0 = Debug|Any CPU
+		{674EEB91-C749-4E60-A634-A1CF2F9EBA57}.GPU|x64.ActiveCfg = Debug|Any CPU
+		{674EEB91-C749-4E60-A634-A1CF2F9EBA57}.GPU|x64.Build.0 = Debug|Any CPU
+		{674EEB91-C749-4E60-A634-A1CF2F9EBA57}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{674EEB91-C749-4E60-A634-A1CF2F9EBA57}.Release|Any CPU.Build.0 = Release|Any CPU
+		{674EEB91-C749-4E60-A634-A1CF2F9EBA57}.Release|x64.ActiveCfg = Release|Any CPU
+		{674EEB91-C749-4E60-A634-A1CF2F9EBA57}.Release|x64.Build.0 = Release|Any CPU
+		{674EEB91-C749-4E60-A634-A1CF2F9EBA57}.Release-JP|Any CPU.ActiveCfg = Release|Any CPU
+		{674EEB91-C749-4E60-A634-A1CF2F9EBA57}.Release-JP|Any CPU.Build.0 = Release|Any CPU
+		{674EEB91-C749-4E60-A634-A1CF2F9EBA57}.Release-JP|x64.ActiveCfg = Release|Any CPU
+		{674EEB91-C749-4E60-A634-A1CF2F9EBA57}.Release-JP|x64.Build.0 = Release|Any CPU
+		{CF348AB5-8DAD-4813-8BC1-3CB964A51603}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CF348AB5-8DAD-4813-8BC1-3CB964A51603}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CF348AB5-8DAD-4813-8BC1-3CB964A51603}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{CF348AB5-8DAD-4813-8BC1-3CB964A51603}.Debug|x64.Build.0 = Debug|Any CPU
+		{CF348AB5-8DAD-4813-8BC1-3CB964A51603}.GPU|Any CPU.ActiveCfg = Debug|Any CPU
+		{CF348AB5-8DAD-4813-8BC1-3CB964A51603}.GPU|Any CPU.Build.0 = Debug|Any CPU
+		{CF348AB5-8DAD-4813-8BC1-3CB964A51603}.GPU|x64.ActiveCfg = Debug|Any CPU
+		{CF348AB5-8DAD-4813-8BC1-3CB964A51603}.GPU|x64.Build.0 = Debug|Any CPU
+		{CF348AB5-8DAD-4813-8BC1-3CB964A51603}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CF348AB5-8DAD-4813-8BC1-3CB964A51603}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CF348AB5-8DAD-4813-8BC1-3CB964A51603}.Release|x64.ActiveCfg = Release|Any CPU
+		{CF348AB5-8DAD-4813-8BC1-3CB964A51603}.Release|x64.Build.0 = Release|Any CPU
+		{CF348AB5-8DAD-4813-8BC1-3CB964A51603}.Release-JP|Any CPU.ActiveCfg = Release-JP|Any CPU
+		{CF348AB5-8DAD-4813-8BC1-3CB964A51603}.Release-JP|Any CPU.Build.0 = Release-JP|Any CPU
+		{CF348AB5-8DAD-4813-8BC1-3CB964A51603}.Release-JP|x64.ActiveCfg = Release-JP|Any CPU
+		{CF348AB5-8DAD-4813-8BC1-3CB964A51603}.Release-JP|x64.Build.0 = Release-JP|Any CPU
+		{C01ACE68-325B-4503-B0B1-4597EAEB1506}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C01ACE68-325B-4503-B0B1-4597EAEB1506}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C01ACE68-325B-4503-B0B1-4597EAEB1506}.Debug|x64.ActiveCfg = Debug|x64
+		{C01ACE68-325B-4503-B0B1-4597EAEB1506}.Debug|x64.Build.0 = Debug|x64
+		{C01ACE68-325B-4503-B0B1-4597EAEB1506}.GPU|Any CPU.ActiveCfg = GPU|Any CPU
+		{C01ACE68-325B-4503-B0B1-4597EAEB1506}.GPU|Any CPU.Build.0 = GPU|Any CPU
+		{C01ACE68-325B-4503-B0B1-4597EAEB1506}.GPU|x64.ActiveCfg = GPU|x64
+		{C01ACE68-325B-4503-B0B1-4597EAEB1506}.GPU|x64.Build.0 = GPU|x64
+		{C01ACE68-325B-4503-B0B1-4597EAEB1506}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C01ACE68-325B-4503-B0B1-4597EAEB1506}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C01ACE68-325B-4503-B0B1-4597EAEB1506}.Release|x64.ActiveCfg = Release|x64
+		{C01ACE68-325B-4503-B0B1-4597EAEB1506}.Release|x64.Build.0 = Release|x64
+		{C01ACE68-325B-4503-B0B1-4597EAEB1506}.Release-JP|Any CPU.ActiveCfg = Release|Any CPU
+		{C01ACE68-325B-4503-B0B1-4597EAEB1506}.Release-JP|Any CPU.Build.0 = Release|Any CPU
+		{C01ACE68-325B-4503-B0B1-4597EAEB1506}.Release-JP|x64.ActiveCfg = Release|x64
+		{C01ACE68-325B-4503-B0B1-4597EAEB1506}.Release-JP|x64.Build.0 = Release|x64
+		{D73867B1-4622-4ADF-8AF2-B6D74AC71F3A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D73867B1-4622-4ADF-8AF2-B6D74AC71F3A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D73867B1-4622-4ADF-8AF2-B6D74AC71F3A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D73867B1-4622-4ADF-8AF2-B6D74AC71F3A}.Debug|x64.Build.0 = Debug|Any CPU
+		{D73867B1-4622-4ADF-8AF2-B6D74AC71F3A}.GPU|Any CPU.ActiveCfg = Debug|Any CPU
+		{D73867B1-4622-4ADF-8AF2-B6D74AC71F3A}.GPU|Any CPU.Build.0 = Debug|Any CPU
+		{D73867B1-4622-4ADF-8AF2-B6D74AC71F3A}.GPU|x64.ActiveCfg = Debug|Any CPU
+		{D73867B1-4622-4ADF-8AF2-B6D74AC71F3A}.GPU|x64.Build.0 = Debug|Any CPU
+		{D73867B1-4622-4ADF-8AF2-B6D74AC71F3A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D73867B1-4622-4ADF-8AF2-B6D74AC71F3A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D73867B1-4622-4ADF-8AF2-B6D74AC71F3A}.Release|x64.ActiveCfg = Release|Any CPU
+		{D73867B1-4622-4ADF-8AF2-B6D74AC71F3A}.Release|x64.Build.0 = Release|Any CPU
+		{D73867B1-4622-4ADF-8AF2-B6D74AC71F3A}.Release-JP|Any CPU.ActiveCfg = Release|Any CPU
+		{D73867B1-4622-4ADF-8AF2-B6D74AC71F3A}.Release-JP|Any CPU.Build.0 = Release|Any CPU
+		{D73867B1-4622-4ADF-8AF2-B6D74AC71F3A}.Release-JP|x64.ActiveCfg = Release|Any CPU
+		{D73867B1-4622-4ADF-8AF2-B6D74AC71F3A}.Release-JP|x64.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C21C7C17-04F2-4FFD-81EA-BB765A198D69}
+	EndGlobalSection
+EndGlobal
