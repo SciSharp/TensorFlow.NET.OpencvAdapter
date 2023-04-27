@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>10</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\opencvsharp\src\OpenCvSharp\OpenCvSharp.csproj" />
+    <ProjectReference Include="..\..\TensorFlow.NET\src\TensorFlowNET.Core\Tensorflow.Binding.csproj" />
+  </ItemGroup>
+
+</Project>
