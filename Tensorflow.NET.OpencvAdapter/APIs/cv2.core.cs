@@ -413,7 +413,7 @@ namespace Tensorflow.OpencvAdapter.APIs
             Mat dist = new();
             Mat nidx = new();
             Cv2.BatchDistance(src1Mat, src2Mat, dist, dtype, nidx, normType,
-                k, mask?.AsMat(), update, crosscheck);
+                k, mask.ToInputArray(), update, crosscheck);
             return (dist.numpy(), nidx.numpy());
         }
 
@@ -502,7 +502,7 @@ namespace Tensorflow.OpencvAdapter.APIs
         /// <returns>Pointer to returned minimum value, maximum value, minimum location, maximum location.</returns>
         public (double, double, Point, Point) minMaxLoc(NDArray src, NDArray? mask = null)
         {
-            Cv2.MinMaxLoc(src.AsMat(), out double minVal, out double maxVal, out Point minLoc, out Point maxLoc, mask?.AsMat());
+            Cv2.MinMaxLoc(src.AsMat(), out double minVal, out double maxVal, out Point minLoc, out Point maxLoc, mask.ToInputArray());
             return (minVal, maxVal, minLoc, maxLoc);
         }
 
@@ -527,7 +527,7 @@ namespace Tensorflow.OpencvAdapter.APIs
         {
             int[] minIdx = new int[src.AsMat().Dims];
             int[] maxIdx = new int[src.AsMat().Dims];
-            Cv2.MinMaxIdx(src.AsMat(), out double minVal, out double maxVal,minIdx, maxIdx, mask?.AsMat());
+            Cv2.MinMaxIdx(src.AsMat(), out double minVal, out double maxVal,minIdx, maxIdx, mask.ToInputArray());
             return (minVal, maxVal, minIdx, maxIdx);
         }
 
@@ -702,7 +702,7 @@ namespace Tensorflow.OpencvAdapter.APIs
         public NDArray bitwise_and(NDArray src1, NDArray src2, NDArray? mask = null)
         {
             Mat dstMat = new();
-            Cv2.BitwiseAnd(src1.AsMat(), src2.AsMat(), dstMat, mask?.AsMat());
+            Cv2.BitwiseAnd(src1.AsMat(), src2.AsMat(), dstMat, mask.ToInputArray());
             return dstMat.numpy();
         }
 
@@ -716,7 +716,7 @@ namespace Tensorflow.OpencvAdapter.APIs
         public NDArray bitwise_or(NDArray src1, NDArray src2, NDArray? mask = null)
         {
             Mat dstMat = new();
-            Cv2.BitwiseOr(src1.AsMat(), src2.AsMat(), dstMat, mask?.AsMat());
+            Cv2.BitwiseOr(src1.AsMat(), src2.AsMat(), dstMat, mask.ToInputArray());
             return dstMat.numpy();
         }
 
@@ -730,7 +730,7 @@ namespace Tensorflow.OpencvAdapter.APIs
         public NDArray bitwise_xor(NDArray src1, NDArray src2, NDArray? mask = null)
         {
             Mat dstMat = new();
-            Cv2.BitwiseXor(src1.AsMat(), src2.AsMat(), dstMat, mask?.AsMat());
+            Cv2.BitwiseXor(src1.AsMat(), src2.AsMat(), dstMat, mask.ToInputArray());
             return dstMat.numpy();
         }
 
@@ -743,7 +743,7 @@ namespace Tensorflow.OpencvAdapter.APIs
         public NDArray bitwise_not(NDArray src, NDArray? mask = null)
         {
             Mat dstMat = new();
-            Cv2.BitwiseNot(src.AsMat(), dstMat, mask?.AsMat());
+            Cv2.BitwiseNot(src.AsMat(), dstMat, mask.ToInputArray());
             return dstMat.numpy();
         }
 
@@ -772,7 +772,7 @@ namespace Tensorflow.OpencvAdapter.APIs
         public NDArray copyTo(NDArray src, NDArray? mask = null, NDArray? dst = null)
         {
             Mat dstMat = dst is null ? new Mat() : dst.AsMat();
-            Cv2.CopyTo(src.AsMat(), dstMat, mask?.AsMat());
+            Cv2.CopyTo(src.AsMat(), dstMat, mask.ToInputArray());
             if(dst is null)
             {
                 dst = dstMat.numpy();
@@ -1026,7 +1026,7 @@ namespace Tensorflow.OpencvAdapter.APIs
         {
             Mat dstMat = new();
             var srcMat = src.AsMat();
-            Cv2.MulTransposed(srcMat, dstMat, aTa, delta?.AsMat(), scale, dtype.ToMatTypeNumber(srcMat.Channels()));
+            Cv2.MulTransposed(srcMat, dstMat, aTa, delta.ToInputArray(), scale, dtype.ToMatTypeNumber(srcMat.Channels()));
             return dstMat.numpy();
         }
 
