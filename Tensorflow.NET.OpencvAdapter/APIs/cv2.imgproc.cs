@@ -1,7 +1,10 @@
 ﻿using OpenCvSharp;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
 using Tensorflow.NumPy;
 using Tensorflow.OpencvAdapter.Extensions;
 
@@ -825,6 +828,1119 @@ namespace Tensorflow.OpencvAdapter.APIs
             Mat dstMat = new();
             Cv2.GetRectSubPix(image.AsMat(), patchSize, center, dstMat, patchType);
             return dstMat.numpy();
+        }
+
+        /// <summary>
+        /// Remaps an image to log-polar space.
+        /// </summary>
+        /// <param name="src">Source image</param>
+        /// <param name="center">The transformation center; where the output precision is maximal</param>
+        /// <param name="m">Magnitude scale parameter.</param>
+        /// <param name="flags">A combination of interpolation methods, see cv::InterpolationFlags</param>
+        /// <returns>Destination image</returns>
+        public NDArray logPolar(NDArray src, Point2f center, double m, InterpolationFlags flags)
+        {
+            Mat dstMat = new();
+            Cv2.LogPolar(src.AsMat(), dstMat, center, m, flags);
+            return dstMat.numpy();
+        }
+
+        /// <summary>
+        /// Remaps an image to polar space.
+        /// </summary>
+        /// <param name="src">Source image</param>
+        /// <param name="center">The transformation center</param>
+        /// <param name="maxRadius">Inverse magnitude scale parameter</param>
+        /// <param name="flags">A combination of interpolation methods, see cv::InterpolationFlags</param>
+        /// <returns>Destination image</returns>
+        public NDArray linearPolar(NDArray src, Point2f center, double maxRadius, InterpolationFlags flags)
+        {
+            Mat dstMat = new();
+            Cv2.LinearPolar(src.AsMat(), dstMat, center, maxRadius, flags);
+            return dstMat.numpy();
+        }
+
+        /// <summary>
+        /// Remaps an image to polar or semilog-polar coordinates space.
+        /// </summary>
+        /// <remarks>
+        /// -  The function can not operate in-place.
+        /// -  To calculate magnitude and angle in degrees #cartToPolar is used internally thus angles are measured from 0 to 360 with accuracy about 0.3 degrees.
+        /// -  This function uses #remap. Due to current implementation limitations the size of an input and output images should be less than 32767x32767.
+        /// </remarks>
+        /// <param name="src">Source image.</param>
+        /// <param name="dsize">The destination image size (see description for valid options).</param>
+        /// <param name="center">The transformation center.</param>
+        /// <param name="maxRadius">The radius of the bounding circle to transform. It determines the inverse magnitude scale parameter too.</param>
+        /// <param name="interpolationFlags">interpolation methods.</param>
+        /// <param name="warpPolarMode">interpolation methods.</param>
+        /// <returns>Destination image. It will have same type as src.</returns>
+        public NDArray warpPolar(NDArray src, Size dsize, Point2f center, double maxRadius, 
+            InterpolationFlags interpolationFlags, WarpPolarMode warpPolarMode)
+        {
+            Mat dstMat = new();
+            Cv2.WarpPolar(src.AsMat(), dstMat, dsize, center, maxRadius, interpolationFlags, warpPolarMode);
+            return dstMat.numpy();
+        }
+
+        /// <summary>
+        /// Calculates the integral of an image.
+        /// The function calculates one or more integral images for the source image.
+        /// </summary>
+        /// <param name="src"></param>
+        /// <param name="sdepth"></param>
+        /// <returns>sum and sqsum</returns>
+        public (NDArray, NDArray) integral(NDArray src, int sdepth = -1)
+        {
+            Mat sumMat = new();
+            Mat sqsumMat = new();
+            Cv2.Integral(src.AsMat(), sumMat, sqsumMat, sdepth);
+            return (sumMat.numpy(), sqsumMat.numpy());
+        }
+
+        /// <summary>
+        /// Calculates the integral of an image.
+        /// The function calculates one or more integral images for the source image.
+        /// </summary>
+        /// <param name="src">input image as W×H, 8-bit or floating-point (32f or 64f).</param>
+        /// <param name="sdepth">desired depth of the integral and the tilted integral images, CV_32S, CV_32F, or CV_64F.</param>
+        /// <param name="sqdepth">desired depth of the integral image of squared pixel values, CV_32F or CV_64F.</param>
+        /// <returns>sum, sqsum and titled, which respectively mean: 1. integral image as (W+1)×(H+1) , 32-bit integer or floating-point (32f or 64f). 
+        /// 2. integral image for squared pixel values; it is (W+1)×(H+1), double-precision floating-point (64f) array. 
+        /// 3. integral for the image rotated by 45 degrees; it is (W+1)×(H+1) array with the same data type as sum.</returns>
+        public (NDArray, NDArray, NDArray) integral(NDArray src, int sdepth = -1, int sqdepth = -1)
+        {
+            Mat sumMat = new();
+            Mat sqsumMat = new();
+            Mat titledMat = new();
+            Cv2.Integral(src.AsMat(), sumMat, sqsumMat, titledMat, sdepth, sqdepth);
+            return (sumMat.numpy(), sqsumMat.numpy(), titledMat.numpy());
+        }
+
+        /// <summary>
+        /// Adds an image to the accumulator.
+        /// </summary>
+        /// <param name="src">Input image as 1- or 3-channel, 8-bit or 32-bit floating point.</param>
+        /// <param name="dst">Accumulator image with the same number of channels as input image, 32-bit or 64-bit floating-point.</param>
+        /// <param name="mask">Optional operation mask.</param>
+        /// <returns>dst</returns>
+        public NDArray accumulate(NDArray src, NDArray? dst, NDArray mask)
+        {
+            if (dst is not null && !dst.CanConvertToMatWithouyCopy())
+            {
+                throw new ValueError("Cannot convert the NDArray to Mat without copy but the method " +
+                    "dst needs that. Please consider change the adapter mode.");
+            }
+            var dstMat = dst is null ? new Mat() : dst.AsMat();
+            Cv2.Accumulate(src.AsMat(), dstMat, mask.AsMat());
+            if(dst is not null)
+            {
+                return dst;
+            }
+            else
+            {
+                return dstMat.numpy();
+            }
+        }
+
+        /// <summary>
+        /// Adds the square of a source image to the accumulator.
+        /// </summary>
+        /// <param name="src">Input image as 1- or 3-channel, 8-bit or 32-bit floating point.</param>
+        /// <param name="dst">Accumulator image with the same number of channels as input image, 32-bit or 64-bit floating-point.</param>
+        /// <param name="mask">Optional operation mask.</param>
+        /// <returns></returns>
+        public NDArray accumulateSquare(NDArray src, NDArray? dst, NDArray mask)
+        {
+            if (dst is not null && !dst.CanConvertToMatWithouyCopy())
+            {
+                throw new ValueError("Cannot convert the NDArray to Mat without copy but the method " +
+                    "dst needs that. Please consider change the adapter mode.");
+            }
+            var dstMat = dst is null ? new Mat() : dst.AsMat();
+            Cv2.AccumulateSquare(src.AsMat(), dstMat, mask.AsMat());
+            if (dst is not null)
+            {
+                return dst;
+            }
+            else
+            {
+                return dstMat.numpy();
+            }
+        }
+
+        /// <summary>
+        /// Adds the per-element product of two input images to the accumulator.
+        /// </summary>
+        /// <param name="src1">First input image, 1- or 3-channel, 8-bit or 32-bit floating point.</param>
+        /// <param name="src2">Second input image of the same type and the same size as src1</param>
+        /// <param name="dst">Accumulator with the same number of channels as input images, 32-bit or 64-bit floating-point.</param>
+        /// <param name="mask">Optional operation mask.</param>
+        /// <returns>dst</returns>
+        public NDArray accumulateProduct(NDArray src1, NDArray src2, NDArray? dst, NDArray mask)
+        {
+            if (dst is not null && !dst.CanConvertToMatWithouyCopy())
+            {
+                throw new ValueError("Cannot convert the NDArray to Mat without copy but the method " +
+                    "dst needs that. Please consider change the adapter mode.");
+            }
+            var dstMat = dst is null ? new Mat() : dst.AsMat();
+            Cv2.AccumulateProduct(src1.AsMat(), src2.AsMat(), dstMat, mask.AsMat());
+            if (dst is not null)
+            {
+                return dst;
+            }
+            else
+            {
+                return dstMat.numpy();
+            }
+        }
+
+        /// <summary>
+        /// Updates a running average.
+        /// </summary>
+        /// <param name="src">Input image as 1- or 3-channel, 8-bit or 32-bit floating point.</param>
+        /// <param name="dst">Accumulator image with the same number of channels as input image, 32-bit or 64-bit floating-point.</param>
+        /// <param name="alpha">Weight of the input image.</param>
+        /// <param name="mask">Optional operation mask.</param>
+        /// <returns>dst</returns>
+        public NDArray accumulateWeighted(NDArray src, NDArray? dst, double alpha, NDArray mask)
+        {
+            if (dst is not null && !dst.CanConvertToMatWithouyCopy())
+            {
+                throw new ValueError("Cannot convert the NDArray to Mat without copy but the method " +
+                    "dst needs that. Please consider change the adapter mode.");
+            }
+            var dstMat = dst is null ? new Mat() : dst.AsMat();
+            Cv2.AccumulateWeighted(src.AsMat(), dstMat, alpha, mask.AsMat());
+            if (dst is not null)
+            {
+                return dst;
+            }
+            else
+            {
+                return dstMat.numpy();
+            }
+        }
+
+        /// <summary>
+        /// The function is used to detect translational shifts that occur between two images.
+        /// 
+        /// The operation takes advantage of the Fourier shift theorem for detecting the translational shift in
+        /// the frequency domain.It can be used for fast image registration as well as motion estimation.
+        /// For more information please see http://en.wikipedia.org/wiki/Phase_correlation.
+        /// 
+        /// Calculates the cross-power spectrum of two supplied source arrays. The arrays are padded if needed with getOptimalDFTSize.
+        /// </summary>
+        /// <param name="src1">Source floating point array (CV_32FC1 or CV_64FC1)</param>
+        /// <param name="src2">Source floating point array (CV_32FC1 or CV_64FC1)</param>
+        /// <param name="window">Floating point array with windowing coefficients to reduce edge effects (optional).</param>
+        /// <returns>detected phase shift(sub-pixel) between the two arrays, and response, which is signal power within 
+        /// the 5x5 centroid around the peak, between 0 and 1 (optional).</returns>
+        public (Point2d, double) phaseCorrelate(NDArray src1, NDArray src2, NDArray window)
+        {
+            var retVal = Cv2.PhaseCorrelate(src1.AsMat(), src2.AsMat(), window.AsMat(), out var response);
+            return (retVal, response);
+        }
+
+        /// <summary>
+        /// Computes a Hanning window coefficients in two dimensions.
+        /// </summary>
+        /// <param name="dst">Destination array to place Hann coefficients in</param>
+        /// <param name="winSize">The window size specifications</param>
+        /// <param name="type">Created array type</param>
+        /// <returns>dst</returns>
+        public NDArray createHanningWindow(NDArray dst, Size winSize, MatType type)
+        {
+            if (dst is not null && !dst.CanConvertToMatWithouyCopy())
+            {
+                throw new ValueError("Cannot convert the NDArray to Mat without copy but the method " +
+                    "dst needs that. Please consider change the adapter mode.");
+            }
+            var dstMat = dst is null ? new Mat() : dst.AsMat();
+            Cv2.CreateHanningWindow(dstMat, winSize, type);
+            if (dst is not null)
+            {
+                return dst;
+            }
+            else
+            {
+                return dstMat.numpy();
+            }
+        }
+
+        /// <summary>
+        /// Applies a fixed-level threshold to each array element.
+        /// </summary>
+        /// <param name="src">input array (single-channel, 8-bit or 32-bit floating point).</param>
+        /// <param name="thresh">threshold value.</param>
+        /// <param name="maxval">maximum value to use with the THRESH_BINARY and THRESH_BINARY_INV thresholding types.</param>
+        /// <param name="type">thresholding type (see the details below).</param>
+        /// <returns>the computed threshold value when type == OTSU and output array of the same size and type as src</returns>
+        public (double, NDArray) threshold(NDArray src, double thresh, double maxval, ThresholdTypes type)
+        {
+            Mat dstMat = new();
+            var retVal = Cv2.Threshold(src.AsMat(), dstMat, thresh, maxval, type);
+            return (retVal, dstMat.numpy());
+        }
+
+        /// <summary>
+        /// Applies an adaptive threshold to an array.
+        /// </summary>
+        /// <param name="src">Source 8-bit single-channel image.</param>
+        /// <param name="maxval">Non-zero value assigned to the pixels for which the condition is satisfied. See the details below.</param>
+        /// <param name="adaptiveMethod">Adaptive thresholding algorithm to use, ADAPTIVE_THRESH_MEAN_C or ADAPTIVE_THRESH_GAUSSIAN_C .</param>
+        /// <param name="thresholdType">Thresholding type that must be either THRESH_BINARY or THRESH_BINARY_INV .</param>
+        /// <param name="blockSize">Size of a pixel neighborhood that is used to calculate a threshold value for the pixel: 3, 5, 7, and so on.</param>
+        /// <param name="c">Constant subtracted from the mean or weighted mean (see the details below). 
+        /// Normally, it is positive but may be zero or negative as well.</param>
+        /// <returns>Destination image of the same size and the same type as src</returns>
+        public NDArray adaptiveThreshold(NDArray src, double maxval, AdaptiveThresholdTypes adaptiveMethod, 
+            ThresholdTypes thresholdType, int blockSize, double c)
+        {
+            Mat dstMat = new();
+            Cv2.AdaptiveThreshold(src.AsMat(), dstMat, maxval, adaptiveMethod, thresholdType, blockSize, c);
+            return dstMat.numpy();
+        }
+
+        /// <summary>
+        /// Blurs an image and downsamples it.
+        /// </summary>
+        /// <param name="src">input image.</param>
+        /// <param name="dstSize">size of the output image; by default, it is computed as Size((src.cols+1)/2</param>
+        /// <param name="borderType"></param>
+        /// <returns>output image; it has the specified size and the same type as src.</returns>
+        public NDArray pyrDown(NDArray src, Size? dstSize = null, BorderTypes borderType = BorderTypes.Default)
+        {
+            Mat dstMat = new();
+            Cv2.PyrDown(src.AsMat(), dstMat, dstSize, borderType);
+            return dstMat.numpy();
+        }
+
+        /// <summary>
+        /// Upsamples an image and then blurs it.
+        /// </summary>
+        /// <param name="src">input image.</param>
+        /// <param name="dstSize">size of the output image; by default, it is computed as Size(src.cols*2, (src.rows*2)</param>
+        /// <param name="borderType"></param>
+        /// <returns>output image. It has the specified size and the same type as src.</returns>
+        public NDArray pyrUp(NDArray src, Size? dstSize = null, BorderTypes borderType = BorderTypes.Default)
+        {
+            Mat dstMat = new();
+            Cv2.PyrUp(src.AsMat(), dstMat, dstSize, borderType);
+            return dstMat.numpy();
+        }
+
+        /// <summary>
+        /// Creates a predefined CLAHE object
+        /// </summary>
+        /// <param name="clipLimit"></param>
+        /// <param name="tileGridSize"></param>
+        /// <returns></returns>
+        public CLAHE CreateCLAHE(double clipLimit = 40.0, Size? tileGridSize = null)
+        {
+            return Cv2.CreateCLAHE(clipLimit, tileGridSize);
+        }
+
+        /// <summary>
+        /// Computes the "minimal work" distance between two weighted point configurations.
+        ///
+        /// The function computes the earth mover distance and/or a lower boundary of the distance between the
+        /// two weighted point configurations.One of the applications described in @cite RubnerSept98,
+        /// @cite Rubner2000 is multi-dimensional histogram comparison for image retrieval.EMD is a transportation
+        /// problem that is solved using some modification of a simplex algorithm, thus the complexity is
+        /// exponential in the worst case, though, on average it is much faster.In the case of a real metric
+        /// the lower boundary can be calculated even faster (using linear-time algorithm) and it can be used
+        /// to determine roughly whether the two signatures are far enough so that they cannot relate to the same object.
+        /// </summary>
+        /// <param name="signature1">First signature, a \f$\texttt{size1}\times \texttt{dims}+1\f$ floating-point matrix. 
+        /// Each row stores the point weight followed by the point coordinates.The matrix is allowed to have
+        /// a single column(weights only) if the user-defined cost matrix is used.The weights must be non-negative
+        /// and have at least one non-zero value.</param>
+        /// <param name="signature2">Second signature of the same format as signature1 , though the number of rows
+        /// may be different.The total weights may be different.In this case an extra "dummy" point is added
+        /// to either signature1 or signature2. The weights must be non-negative and have at least one non-zero value.</param>
+        /// <param name="distType">Used metric.</param>
+        public float EMD(NDArray signature1, NDArray signature2, DistanceTypes distType)
+        {
+            return Cv2.EMD(signature1.AsMat(), signature2.AsMat(), distType);
+        }
+
+        /// <summary>
+        /// Computes the "minimal work" distance between two weighted point configurations.
+        ///
+        /// The function computes the earth mover distance and/or a lower boundary of the distance between the
+        /// two weighted point configurations.One of the applications described in @cite RubnerSept98,
+        /// @cite Rubner2000 is multi-dimensional histogram comparison for image retrieval.EMD is a transportation
+        /// problem that is solved using some modification of a simplex algorithm, thus the complexity is
+        /// exponential in the worst case, though, on average it is much faster.In the case of a real metric
+        /// the lower boundary can be calculated even faster (using linear-time algorithm) and it can be used
+        /// to determine roughly whether the two signatures are far enough so that they cannot relate to the same object.
+        /// </summary>
+        /// <param name="signature1">First signature, a \f$\texttt{size1}\times \texttt{dims}+1\f$ floating-point matrix. 
+        /// Each row stores the point weight followed by the point coordinates.The matrix is allowed to have
+        /// a single column(weights only) if the user-defined cost matrix is used.The weights must be non-negative
+        /// and have at least one non-zero value.</param>
+        /// <param name="signature2">Second signature of the same format as signature1 , though the number of rows
+        /// may be different.The total weights may be different.In this case an extra "dummy" point is added
+        /// to either signature1 or signature2. The weights must be non-negative and have at least one non-zero value.</param>
+        /// <param name="distType">Used metric.</param>
+        /// <param name="cost">User-defined size1 x size2 cost matrix. Also, if a cost matrix
+        /// is used, lower boundary lowerBound cannot be calculated because it needs a metric function.</param>
+        /// <returns></returns>
+        public float EMD(NDArray signature1, NDArray signature2, DistanceTypes distType, NDArray? cost)
+        {
+            return Cv2.EMD(signature1.AsMat(), signature2.AsMat(), distType, cost.ToInputArray());
+        }
+
+        /// <summary>
+        /// Computes the "minimal work" distance between two weighted point configurations.
+        ///
+        /// The function computes the earth mover distance and/or a lower boundary of the distance between the
+        /// two weighted point configurations.One of the applications described in @cite RubnerSept98,
+        /// @cite Rubner2000 is multi-dimensional histogram comparison for image retrieval.EMD is a transportation
+        /// problem that is solved using some modification of a simplex algorithm, thus the complexity is
+        /// exponential in the worst case, though, on average it is much faster.In the case of a real metric
+        /// the lower boundary can be calculated even faster (using linear-time algorithm) and it can be used
+        /// to determine roughly whether the two signatures are far enough so that they cannot relate to the same object.
+        /// </summary>
+        /// <param name="signature1">First signature, a \f$\texttt{size1}\times \texttt{dims}+1\f$ floating-point matrix. 
+        /// Each row stores the point weight followed by the point coordinates.The matrix is allowed to have
+        /// a single column(weights only) if the user-defined cost matrix is used.The weights must be non-negative
+        /// and have at least one non-zero value.</param>
+        /// <param name="signature2">Second signature of the same format as signature1 , though the number of rows
+        /// may be different.The total weights may be different.In this case an extra "dummy" point is added
+        /// to either signature1 or signature2. The weights must be non-negative and have at least one non-zero value.</param>
+        /// <param name="distType">Used metric.</param>
+        /// <param name="cost">User-defined size1 x size2 cost matrix. Also, if a cost matrix
+        /// is used, lower boundary lowerBound cannot be calculated because it needs a metric function.</param>
+        /// <param name="flow">Resultant size1 x size2 flow matrix: flow[i,j] is  a flow from i-th point of signature1
+        /// to j-th point of signature2.</param>
+        /// <returns>The second return value is `lowerBound`, which is the lower boundary of a distance between the two
+        /// signatures that is a distance between mass centers.The lower boundary may not be calculated if
+        /// the user-defined cost matrix is used, the total weights of point configurations are not equal, or
+        /// if the signatures consist of weights only(the signature matrices have a single column). You ** must**
+        /// initialize \*lowerBound.If the calculated distance between mass centers is greater or equal to
+        /// \*lowerBound(it means that the signatures are far enough), the function does not calculate EMD.
+        /// In any case \*lowerBound is set to the calculated distance between mass centers on return.
+        /// Thus, if you want to calculate both distance between mass centers and EMD, \*lowerBound should be set to 0.</returns>
+        public (float, float) EMD(NDArray signature1, NDArray signature2, DistanceTypes distType, NDArray? cost, NDArray? flow = null)
+        {
+            var retVal = Cv2.EMD(signature1.AsMat(), signature2.AsMat(), distType, cost.ToInputArray(), out var lowerBound, flow?.AsMat());
+            return (retVal, lowerBound);
+        }
+
+        /// <summary>
+        /// Performs a marker-based image segmentation using the watershed algorithm.
+        /// </summary>
+        /// <param name="image">Input 8-bit 3-channel image.</param>
+        /// <param name="markers">Input/output 32-bit single-channel image (map) of markers. 
+        /// It should have the same size as image.</param>
+        /// <returns>markers</returns>
+        public NDArray waterShed(NDArray image, NDArray markers)
+        {
+            if (!markers.CanConvertToMatWithouyCopy())
+            {
+                throw new ValueError("Cannot convert the NDArray to Mat without copy but the method " +
+                    "waterShed needs that. Please consider change the adapter mode.");
+            }
+            Cv2.Watershed(image.AsMat(), markers.AsMat());
+            return markers;
+        }
+
+        /// <summary>
+        /// Performs initial step of meanshift segmentation of an image.
+        /// </summary>
+        /// <param name="src">The source 8-bit, 3-channel image.</param>
+        /// <param name="sp">The spatial window radius.</param>
+        /// <param name="sr">The color window radius.</param>
+        /// <param name="maxLevel">Maximum level of the pyramid for the segmentation.</param>
+        /// <param name="termcrit">Termination criteria: when to stop meanshift iterations.</param>
+        /// <returns>The destination image of the same format and the same size as the source.</returns>
+        public NDArray pyrMeanShiftFiltering(NDArray src, double sp, double sr, int maxLevel = 1, TermCriteria? termcrit = null)
+        {
+            Mat dstMat = new();
+            Cv2.PyrMeanShiftFiltering(src.AsMat(), dstMat, sp, sr, maxLevel, termcrit);
+            return dstMat.numpy();
+        }
+
+        /// <summary>
+        /// Segments the image using GrabCut algorithm
+        /// </summary>
+        /// <param name="img">Input 8-bit 3-channel image.</param>
+        /// <param name="mask">Input/output 8-bit single-channel mask. 
+        /// The mask is initialized by the function when mode is set to GC_INIT_WITH_RECT. 
+        /// Its elements may have Cv2.GC_BGD / Cv2.GC_FGD / Cv2.GC_PR_BGD / Cv2.GC_PR_FGD</param>
+        /// <param name="rect">ROI containing a segmented object. The pixels outside of the ROI are 
+        /// marked as "obvious background". The parameter is only used when mode==GC_INIT_WITH_RECT.</param>
+        /// <param name="bgdModel">Temporary array for the background model. Do not modify it while you are processing the same image.</param>
+        /// <param name="fgdModel">Temporary arrays for the foreground model. Do not modify it while you are processing the same image.</param>
+        /// <param name="iterCount">Number of iterations the algorithm should make before returning the result. 
+        /// Note that the result can be refined with further calls with mode==GC_INIT_WITH_MASK or mode==GC_EVAL .</param>
+        /// <param name="mode">Operation mode that could be one of GrabCutFlag value.</param>
+        /// <returns>(mask, bgdModel, fgdModel)</returns>
+        public (NDArray, NDArray, NDArray) gradCut(NDArray img, NDArray mask, Rect rect, NDArray bgdModel, 
+            NDArray fgdModel, int iterCount, GrabCutModes mode)
+        {
+            if (!mask.CanConvertToMatWithouyCopy() || !bgdModel.CanConvertToMatWithouyCopy()
+                || !fgdModel.CanConvertToMatWithouyCopy())
+            {
+                throw new ValueError("Cannot convert the NDArray to Mat without copy but the method " +
+                    "gradCut needs that. Please consider change the adapter mode.");
+            }
+            Cv2.GrabCut(img.AsMat(), mask.AsMat(), rect, bgdModel.AsMat(), fgdModel.AsMat(), iterCount, mode);
+            return (mask, bgdModel, fgdModel);
+        }
+
+        /// <summary>
+        /// Fills a connected component with the given color.
+        /// </summary>
+        /// <param name="image">Input/output 1- or 3-channel, 8-bit, or floating-point image. 
+        /// It is modified by the function unless the FLOODFILL_MASK_ONLY flag is set in the 
+        /// second variant of the function. See the details below.</param>
+        /// <param name="seedPoint">Starting point.</param>
+        /// <param name="newVal">New value of the repainted domain pixels.</param>
+        /// <returns></returns>
+        public (int, NDArray) floodFill(NDArray image, Point seedPoint, Scalar newVal)
+        {
+            if (!image.CanConvertToMatWithouyCopy())
+            {
+                throw new ValueError("Cannot convert the NDArray to Mat without copy but the method " +
+                    "floodFill needs that. Please consider change the adapter mode.");
+            }
+            var retVal = Cv2.FloodFill(image.AsMat(), seedPoint, newVal);
+            return (retVal, image);
+        }
+
+        /// <summary>
+        /// Fills a connected component with the given color.
+        /// </summary>
+        /// <param name="image">Input/output 1- or 3-channel, 8-bit, or floating-point image. 
+        /// It is modified by the function unless the FLOODFILL_MASK_ONLY flag is set in the 
+        /// second variant of the function. See the details below.</param>
+        /// <param name="seedPoint">Starting point.</param>
+        /// <param name="newVal">New value of the repainted domain pixels.</param>
+        /// <param name="loDiff">Maximal lower brightness/color difference between the currently 
+        /// observed pixel and one of its neighbors belonging to the component, or a seed pixel 
+        /// being added to the component.</param>
+        /// <param name="upDiff">Maximal upper brightness/color difference between the currently 
+        /// observed pixel and one of its neighbors belonging to the component, or a seed pixel 
+        /// being added to the component.</param>
+        /// <param name="flags">Operation flags. Lower bits contain a connectivity value, 
+        /// 4 (default) or 8, used within the function. Connectivity determines which 
+        /// neighbors of a pixel are considered. Using FloodFillFlags.MaskOnly will
+        /// fill in the mask using the grey value 255 (white). </param>
+        /// <returns>The second return value is Optional output parameter set by the function to the 
+        /// minimum bounding rectangle of the repainted domain. The third return value is image.</returns>
+        public (int, Rect, NDArray) floodFill(NDArray image, Point seedPoint, Scalar newVal,
+            Scalar? loDiff = null, Scalar? upDiff = null, FloodFillFlags flags = FloodFillFlags.Link4)
+        {
+            if (!image.CanConvertToMatWithouyCopy())
+            {
+                throw new ValueError("Cannot convert the NDArray to Mat without copy but the method " +
+                    "floodFill needs that. Please consider change the adapter mode.");
+            }
+            var retVal = Cv2.FloodFill(image.AsMat(), seedPoint, newVal, out var rect, loDiff, upDiff, flags);
+            return (retVal, rect, image);
+        }
+
+        /// <summary>
+        /// Fills a connected component with the given color.
+        /// </summary>
+        /// <param name="image">Input/output 1- or 3-channel, 8-bit, or floating-point image. 
+        /// It is modified by the function unless the FLOODFILL_MASK_ONLY flag is set in the 
+        /// second variant of the function. See the details below.</param>
+        /// <param name="mask">(For the second function only) Operation mask that should be a single-channel 8-bit image, 
+        /// 2 pixels wider and 2 pixels taller. The function uses and updates the mask, so you take responsibility of 
+        /// initializing the mask content. Flood-filling cannot go across non-zero pixels in the mask. For example, 
+        /// an edge detector output can be used as a mask to stop filling at edges. It is possible to use the same mask 
+        /// in multiple calls to the function to make sure the filled area does not overlap.</param>
+        /// <param name="seedPoint">Starting point.</param>
+        /// <param name="newVal">New value of the repainted domain pixels.</param>
+        /// <returns></returns>
+        public (int, NDArray, NDArray) floodFill(NDArray image, NDArray mask, Point seedPoint, Scalar newVal)
+        {
+            if (!image.CanConvertToMatWithouyCopy() || !mask.CanConvertToMatWithouyCopy())
+            {
+                throw new ValueError("Cannot convert the NDArray to Mat without copy but the method " +
+                    "floodFill needs that. Please consider change the adapter mode.");
+            }
+            var retVal = Cv2.FloodFill(image.AsMat(), mask.AsMat(), seedPoint, newVal);
+            return (retVal, image, mask);
+        }
+
+        /// <summary>
+        /// Fills a connected component with the given color.
+        /// </summary>
+        /// <param name="image">Input/output 1- or 3-channel, 8-bit, or floating-point image. 
+        /// It is modified by the function unless the FLOODFILL_MASK_ONLY flag is set in the 
+        /// second variant of the function. See the details below.</param>
+        /// <param name="mask">(For the second function only) Operation mask that should be a single-channel 8-bit image, 
+        /// 2 pixels wider and 2 pixels taller. The function uses and updates the mask, so you take responsibility of 
+        /// initializing the mask content. Flood-filling cannot go across non-zero pixels in the mask. For example, 
+        /// an edge detector output can be used as a mask to stop filling at edges. It is possible to use the same mask 
+        /// in multiple calls to the function to make sure the filled area does not overlap.</param>
+        /// <param name="seedPoint">Starting point.</param>
+        /// <param name="newVal">New value of the repainted domain pixels.</param>
+        /// <param name="loDiff">Maximal lower brightness/color difference between the currently 
+        /// observed pixel and one of its neighbors belonging to the component, or a seed pixel 
+        /// being added to the component.</param>
+        /// <param name="upDiff">Maximal upper brightness/color difference between the currently 
+        /// observed pixel and one of its neighbors belonging to the component, or a seed pixel 
+        /// being added to the component.</param>
+        /// <param name="flags">Operation flags. Lower bits contain a connectivity value, 
+        /// 4 (default) or 8, used within the function. Connectivity determines which 
+        /// neighbors of a pixel are considered. Using FloodFillFlags.MaskOnly will
+        /// fill in the mask using the grey value 255 (white). </param>
+        /// <returns>The second return value is Optional output parameter set by the function to the 
+        /// minimum bounding rectangle of the repainted domain. The third return value is image. 
+        /// The forth return value is maek.</returns>
+        public (int, Rect, NDArray, NDArray) floodFill(NDArray image, NDArray mask, Point seedPoint, Scalar newVal,
+            Scalar? loDiff = null, Scalar? upDiff = null, FloodFillFlags flags = FloodFillFlags.Link4)
+        {
+            if (!image.CanConvertToMatWithouyCopy())
+            {
+                throw new ValueError("Cannot convert the NDArray to Mat without copy but the method " +
+                    "floodFill needs that. Please consider change the adapter mode.");
+            }
+            var retVal = Cv2.FloodFill(image.AsMat(), mask.AsMat(), seedPoint, newVal, out var rect, loDiff, upDiff, flags);
+            return (retVal, rect, image, mask);
+        }
+
+        /// <summary>
+        /// Performs linear blending of two images:
+        /// dst(i,j) = weights1(i,j)*src1(i,j) + weights2(i,j)*src2(i,j)
+        /// </summary>
+        /// <param name="src1">It has a type of CV_8UC(n) or CV_32FC(n), where n is a positive integer.</param>
+        /// <param name="src2">It has the same type and size as src1.</param>
+        /// <param name="weights1">It has a type of CV_32FC1 and the same size with src1.</param>
+        /// <param name="weights2">It has a type of CV_32FC1 and the same size with src1.</param>
+        /// <returns>It is created if it does not have the same size and type with src1.</returns>
+        public NDArray blendLinear(NDArray src1, NDArray src2, NDArray weights1, NDArray weights2)
+        {
+            Mat dstMat = new();
+            Cv2.BlendLinear(src1.AsMat(), src2.AsMat(), weights1.AsMat(), weights2.AsMat(), dstMat);
+            return dstMat.numpy();
+        }
+
+        /// <summary>
+        /// Converts image from one color space to another
+        /// </summary>
+        /// <param name="src">The source image, 8-bit unsigned, 16-bit unsigned or single-precision floating-point</param>
+        /// <param name="code">The color space conversion code</param>
+        /// <param name="dstCn">The number of channels in the destination image; if the parameter is 0, the number of the 
+        /// channels will be derived automatically from src and the code</param>
+        /// <returns>The destination image; will have the same size and the same depth as src</returns>
+        public NDArray cvtColor(NDArray src, ColorConversionCodes code, int dstCn = 0)
+        {
+            Mat dstMat = new();
+            Cv2.CvtColor(src.AsMat(), dstMat, code, dstCn);
+            return dstMat.numpy();
+        }
+
+        /// <summary>
+        /// Converts an image from one color space to another where the source image is stored in two planes.
+        /// This function only supports YUV420 to RGB conversion as of now.
+        /// </summary>
+        /// <param name="src1">8-bit image (#CV_8U) of the Y plane.</param>
+        /// <param name="src2">image containing interleaved U/V plane.</param>
+        /// <param name="code">Specifies the type of conversion. It can take any of the following values:
+        /// - #COLOR_YUV2BGR_NV12
+        /// - #COLOR_YUV2RGB_NV12
+        /// - #COLOR_YUV2BGRA_NV12
+        /// - #COLOR_YUV2RGBA_NV12
+        /// - #COLOR_YUV2BGR_NV21
+        /// - #COLOR_YUV2RGB_NV21
+        /// - #COLOR_YUV2BGRA_NV21
+        /// - #COLOR_YUV2RGBA_NV21</param>
+        /// <returns>output image</returns>
+        public NDArray cvtColorTwoPlane(NDArray src1, NDArray src2, ColorConversionCodes code)
+        {
+            Mat dstMat = new();
+            Cv2.CvtColorTwoPlane(src1.AsMat(), src2.AsMat(), dstMat, code);
+            return dstMat.numpy();
+        }
+
+        /// <summary>
+        /// Applies a GNU Octave/MATLAB equivalent colormap on a given image.
+        /// </summary>
+        /// <param name="src">The source image, grayscale or colored of type CV_8UC1 or CV_8UC3.</param>
+        /// <param name="colormap">colormap The colormap to apply</param>
+        /// <returns>The result is the colormapped source image. Note: Mat::create is called on dst.</returns>
+        public NDArray applyColorMap(NDArray src, NDArray userColor)
+        {
+            Mat dstMat = new();
+            Cv2.ApplyColorMap(src.AsMat(), dstMat, userColor.AsMat());
+            return dstMat.numpy();
+        }
+
+        /// <summary>
+        /// Applies a GNU Octave/MATLAB equivalent colormap on a given image.
+        /// </summary>
+        /// <param name="src">The source image, grayscale or colored of type CV_8UC1 or CV_8UC3.</param>
+        /// <param name="userColor">The colormap to apply of type CV_8UC1 or CV_8UC3 and size 256</param>
+        /// <returns>The result is the colormapped source image. Note: Mat::create is called on dst.</returns>
+        public NDArray applyColorMap(NDArray src, ColormapTypes colormap)
+        {
+            Mat dstMat = new();
+            Cv2.ApplyColorMap(src.AsMat(), dstMat, colormap);
+            return dstMat.numpy();
+        }
+
+        /// <summary>
+        /// Draws a line segment connecting two points
+        /// </summary>
+        /// <param name="img">The image. </param>
+        /// <param name="pt1X">First point's x-coordinate of the line segment. </param>
+        /// <param name="pt1Y">First point's y-coordinate of the line segment. </param>
+        /// <param name="pt2X">Second point's x-coordinate of the line segment. </param>
+        /// <param name="pt2Y">Second point's y-coordinate of the line segment. </param>
+        /// <param name="color">Line color. </param>
+        /// <param name="thickness">Line thickness. [By default this is 1]</param>
+        /// <param name="lineType">Type of the line. [By default this is LineType.Link8]</param>
+        /// <param name="shift">Number of fractional bits in the point coordinates. [By default this is 0]</param>
+        /// <returns>img</returns>
+        public NDArray line(NDArray img, int pt1X, int pt1Y, int pt2X, int pt2Y, Scalar color,
+            int thickness = 1, LineTypes lineType = LineTypes.Link8, int shift = 0)
+        {
+            if (!img.CanConvertToMatWithouyCopy())
+            {
+                throw new ValueError("Cannot convert the NDArray to Mat without copy but the method " +
+                    "line needs that. Please consider change the adapter mode.");
+            }
+            Cv2.Line(img.AsMat(), pt1X, pt1Y, pt2X, pt2Y, color, thickness, lineType, shift);
+            return img;
+        }
+
+        /// <summary>
+        /// Draws a line segment connecting two points
+        /// </summary>
+        /// <param name="img">The image. </param>
+        /// <param name="pt1">First point of the line segment. </param>
+        /// <param name="pt2">Second point of the line segment. </param>
+        /// <param name="color">Line color. </param>
+        /// <param name="thickness">Line thickness. [By default this is 1]</param>
+        /// <param name="lineType">Type of the line. [By default this is LineType.Link8]</param>
+        /// <param name="shift">Number of fractional bits in the point coordinates. [By default this is 0]</param>
+        /// <returns>img</returns>
+        public NDArray line(NDArray img, Point pt1, Point pt2, Scalar color, int thickness = 1,
+            LineTypes lineType = LineTypes.Link8, int shift = 0)
+        {
+            if (!img.CanConvertToMatWithouyCopy())
+            {
+                throw new ValueError("Cannot convert the NDArray to Mat without copy but the method " +
+                    "line needs that. Please consider change the adapter mode.");
+            }
+            Cv2.Line(img.AsMat(), pt1, pt2, color, thickness, lineType, shift);
+            return img;
+        }
+
+        /// <summary>
+        /// Draws a arrow segment pointing from the first point to the second one.
+        /// The function arrowedLine draws an arrow between pt1 and pt2 points in the image. 
+        /// See also cv::line.
+        /// </summary>
+        /// <param name="img">Image.</param>
+        /// <param name="pt1">The point the arrow starts from.</param>
+        /// <param name="pt2">The point the arrow points to.</param>
+        /// <param name="color">Line color.</param>
+        /// <param name="thickness">Line thickness.</param>
+        /// <param name="lineType">Type of the line, see cv::LineTypes</param>
+        /// <param name="shift">Number of fractional bits in the point coordinates.</param>
+        /// <param name="tipLength">The length of the arrow tip in relation to the arrow length</param>
+        /// <returns>img</returns>
+        public NDArray arrowedLine(NDArray img, Point pt1, Point pt2, Scalar color, int thickness = 1,
+            LineTypes lineType = LineTypes.Link8, int shift = 0, double tipLength = 0.1)
+        {
+            if (!img.CanConvertToMatWithouyCopy())
+            {
+                throw new ValueError("Cannot convert the NDArray to Mat without copy but the method " +
+                    "line needs that. Please consider change the adapter mode.");
+            }
+            Cv2.ArrowedLine(img.AsMat(), pt1, pt2, color, thickness, lineType, shift, tipLength);
+            return img;
+        }
+
+        /// <summary>
+        /// Draws simple, thick or filled rectangle
+        /// </summary>
+        /// <param name="img">Image. </param>
+        /// <param name="pt1">One of the rectangle vertices. </param>
+        /// <param name="pt2">Opposite rectangle vertex. </param>
+        /// <param name="color">Line color (RGB) or brightness (grayscale image). </param>
+        /// <param name="thickness">Thickness of lines that make up the rectangle. Negative values make the function to draw a filled rectangle. [By default this is 1]</param>
+        /// <param name="lineType">Type of the line, see cvLine description. [By default this is LineType.Link8]</param>
+        /// <param name="shift">Number of fractional bits in the point coordinates. [By default this is 0]</param>
+        /// <returns>img</returns>
+        public NDArray rectangle(NDArray img, Point pt1, Point pt2, Scalar color, int thickness = 1,
+            LineTypes lineType = LineTypes.Link8, int shift = 0)
+        {
+            if (!img.CanConvertToMatWithouyCopy())
+            {
+                throw new ValueError("Cannot convert the NDArray to Mat without copy but the method " +
+                    "line needs that. Please consider change the adapter mode.");
+            }
+            Cv2.Rectangle(img.AsMat(), pt1, pt2, color, thickness, lineType, shift);
+            return img;
+        }
+
+        /// <summary>
+        /// Draws simple, thick or filled rectangle
+        /// </summary>
+        /// <param name="img">Image. </param>
+        /// <param name="rect">Rectangle.</param>
+        /// <param name="color">Line color (RGB) or brightness (grayscale image). </param>
+        /// <param name="thickness">Thickness of lines that make up the rectangle.
+        /// Negative values make the function to draw a filled rectangle. [By default this is 1]</param>
+        /// <param name="lineType">Type of the line, see cvLine description. [By default this is LineType.Link8]</param>
+        /// <param name="shift">Number of fractional bits in the point coordinates. [By default this is 0]</param>
+        /// <returns>img</returns>
+        public NDArray rectangle(NDArray img, Rect rect, Scalar color, int thickness = 1,
+            LineTypes lineType = LineTypes.Link8, int shift = 0)
+        {
+            if (!img.CanConvertToMatWithouyCopy())
+            {
+                throw new ValueError("Cannot convert the NDArray to Mat without copy but the method " +
+                    "line needs that. Please consider change the adapter mode.");
+            }
+            Cv2.Rectangle(img.AsMat(), rect, color, thickness, lineType, shift);
+            return img;
+        }
+
+        /// <summary>
+        /// Draws a circle
+        /// </summary>
+        /// <param name="img">Image where the circle is drawn. </param>
+        /// <param name="centerX">X-coordinate of the center of the circle. </param>
+        /// <param name="centerY">Y-coordinate of the center of the circle. </param>
+        /// <param name="radius">Radius of the circle. </param>
+        /// <param name="color">Circle color. </param>
+        /// <param name="thickness">Thickness of the circle outline if positive, otherwise indicates that a filled circle has to be drawn. [By default this is 1]</param>
+        /// <param name="lineType">Type of the circle boundary. [By default this is LineType.Link8]</param>
+        /// <param name="shift">Number of fractional bits in the center coordinates and radius value. [By default this is 0]</param>
+        /// <returns>img</returns>
+        public NDArray circle(NDArray img, int centerX, int centerY, int radius, Scalar color,
+            int thickness = 1, LineTypes lineType = LineTypes.Link8, int shift = 0)
+        {
+            if (!img.CanConvertToMatWithouyCopy())
+            {
+                throw new ValueError("Cannot convert the NDArray to Mat without copy but the method " +
+                    "line needs that. Please consider change the adapter mode.");
+            }
+            Cv2.Circle(img.AsMat(), centerX, centerY, radius, color, thickness, lineType, shift);
+            return img;
+        }
+
+        /// <summary>
+        /// Draws a circle
+        /// </summary>
+        /// <param name="img">Image where the circle is drawn. </param>
+        /// <param name="center">Center of the circle. </param>
+        /// <param name="radius">Radius of the circle. </param>
+        /// <param name="color">Circle color. </param>
+        /// <param name="thickness">Thickness of the circle outline if positive, otherwise indicates that a filled circle has to be drawn. [By default this is 1]</param>
+        /// <param name="lineType">Type of the circle boundary. [By default this is LineType.Link8]</param>
+        /// <param name="shift">Number of fractional bits in the center coordinates and radius value. [By default this is 0]</param>
+        /// <returns>img</returns>
+        public NDArray circle(NDArray img, Point center, int radius, Scalar color,
+            int thickness = 1, LineTypes lineType = LineTypes.Link8, int shift = 0)
+        {
+            if (!img.CanConvertToMatWithouyCopy())
+            {
+                throw new ValueError("Cannot convert the NDArray to Mat without copy but the method " +
+                    "line needs that. Please consider change the adapter mode.");
+            }
+            Cv2.Circle(img.AsMat(), center, radius, color, thickness, lineType, shift);
+            return img;
+        }
+
+        /// <summary>
+        /// Draws simple or thick elliptic arc or fills ellipse sector
+        /// </summary>
+        /// <param name="img">Image. </param>
+        /// <param name="center">Center of the ellipse. </param>
+        /// <param name="axes">Length of the ellipse axes. </param>
+        /// <param name="angle">Rotation angle. </param>
+        /// <param name="startAngle">Starting angle of the elliptic arc. </param>
+        /// <param name="endAngle">Ending angle of the elliptic arc. </param>
+        /// <param name="color">Ellipse color. </param>
+        /// <param name="thickness">Thickness of the ellipse arc. [By default this is 1]</param>
+        /// <param name="lineType">Type of the ellipse boundary. [By default this is LineType.Link8]</param>
+        /// <param name="shift">Number of fractional bits in the center coordinates and axes' values. [By default this is 0]</param>
+        /// <returns>img</returns>
+        public NDArray ellipse(NDArray img, Point center, Size axes, double angle, double startAngle, double endAngle, Scalar color,
+            int thickness = 1, LineTypes lineType = LineTypes.Link8, int shift = 0)
+        {
+            if (!img.CanConvertToMatWithouyCopy())
+            {
+                throw new ValueError("Cannot convert the NDArray to Mat without copy but the method " +
+                    "line needs that. Please consider change the adapter mode.");
+            }
+            Cv2.Ellipse(img.AsMat(), center, axes, angle, startAngle, endAngle, color, thickness, lineType, shift);
+            return img;
+        }
+
+        /// <summary>
+        /// Draws simple or thick elliptic arc or fills ellipse sector
+        /// </summary>
+        /// <param name="img">Image. </param>
+        /// <param name="box">The enclosing box of the ellipse drawn </param>
+        /// <param name="color">Ellipse color. </param>
+        /// <param name="thickness">Thickness of the ellipse boundary. [By default this is 1]</param>
+        /// <param name="lineType">Type of the ellipse boundary. [By default this is LineType.Link8]</param>
+        /// <returns>img</returns>
+        public NDArray ellipse(NDArray img, RotatedRect box, Scalar color,
+            int thickness = 1, LineTypes lineType = LineTypes.Link8)
+        {
+            if (!img.CanConvertToMatWithouyCopy())
+            {
+                throw new ValueError("Cannot convert the NDArray to Mat without copy but the method " +
+                    "line needs that. Please consider change the adapter mode.");
+            }
+            Cv2.Ellipse(img.AsMat(), box, color, thickness, lineType);
+            return img;
+        }
+
+        /// <summary>
+        /// Draws a marker on a predefined position in an image.
+        ///
+        /// The function cv::drawMarker draws a marker on a given position in the image.For the moment several
+        /// marker types are supported, see #MarkerTypes for more information.
+        /// </summary>
+        /// <param name="img">Image.</param>
+        /// <param name="position">The point where the crosshair is positioned.</param>
+        /// <param name="color">Line color.</param>
+        /// <param name="markerType">The specific type of marker you want to use.</param>
+        /// <param name="markerSize">The length of the marker axis [default = 20 pixels]</param>
+        /// <param name="thickness">Line thickness.</param>
+        /// <param name="lineType">Type of the line.</param>
+        /// <returns>img</returns>
+        public NDArray drawMarker(NDArray img, Point position, Scalar color, MarkerTypes markerType = MarkerTypes.Cross, 
+            int markerSize = 20, int thickness = 1, LineTypes lineType = LineTypes.Link8)
+        {
+            if (!img.CanConvertToMatWithouyCopy())
+            {
+                throw new ValueError("Cannot convert the NDArray to Mat without copy but the method " +
+                    "line needs that. Please consider change the adapter mode.");
+            }
+            Cv2.DrawMarker(img.AsMat(), position, color, markerType, markerSize, thickness, lineType);
+            return img;
+        }
+
+        /// <summary>
+        /// Fills a convex polygon.
+        /// </summary>
+        /// <param name="img">Image</param>
+        /// <param name="pts">The polygon vertices</param>
+        /// <param name="color">Polygon color</param>
+        /// <param name="lineType">Type of the polygon boundaries</param>
+        /// <param name="shift">The number of fractional bits in the vertex coordinates</param>
+        /// <returns>img</returns>
+        public NDArray fillConvexPoly(NDArray img, NDArray pts, Scalar color,
+            LineTypes lineType = LineTypes.Link8, int shift = 0)
+        {
+            if (!img.CanConvertToMatWithouyCopy())
+            {
+                throw new ValueError("Cannot convert the NDArray to Mat without copy but the method " +
+                    "line needs that. Please consider change the adapter mode.");
+            }
+            Cv2.FillConvexPoly(img.AsMat(), pts.AsMat(), color, lineType, shift);
+            return img;
+        }
+
+        /// <summary>
+        /// Fills the area bounded by one or more polygons
+        /// </summary>
+        /// <param name="img">Image</param>
+        /// <param name="pts">Array of polygons, each represented as an array of points</param>
+        /// <param name="color">Polygon color</param>
+        /// <param name="lineType">Type of the polygon boundaries</param>
+        /// <param name="shift">The number of fractional bits in the vertex coordinates</param>
+        /// <param name="offset"></param>
+        /// <returns>img</returns>
+        public NDArray fillPoly(NDArray img, NDArray pts, Scalar color,
+            LineTypes lineType = LineTypes.Link8, int shift = 0, Point? offset = null)
+        {
+            if (!img.CanConvertToMatWithouyCopy())
+            {
+                throw new ValueError("Cannot convert the NDArray to Mat without copy but the method " +
+                    "line needs that. Please consider change the adapter mode.");
+            }
+            Cv2.FillPoly(img.AsMat(), pts.AsMat(), color, lineType, shift, offset);
+            return img;
+        }
+
+        /// <summary>
+        /// draws one or more polygonal curves
+        /// </summary>
+        /// <param name="img"></param>
+        /// <param name="pts"></param>
+        /// <param name="isClosed"></param>
+        /// <param name="color"></param>
+        /// <param name="thickness"></param>
+        /// <param name="lineType"></param>
+        /// <param name="shift"></param>
+        /// <returns>img</returns>
+        public NDArray polylines(NDArray img, NDArray pts, bool isClosed, Scalar color,
+            int thickness = 1, LineTypes lineType = LineTypes.Link8, int shift = 0)
+        {
+            if (!img.CanConvertToMatWithouyCopy())
+            {
+                throw new ValueError("Cannot convert the NDArray to Mat without copy but the method " +
+                    "line needs that. Please consider change the adapter mode.");
+            }
+            Cv2.Polylines(img.AsMat(), pts.AsMat(), isClosed, color, thickness, lineType, shift);
+            return img;
+        }
+
+        /// <summary>
+        /// draws contours in the image
+        /// </summary>
+        /// <param name="image">Destination image.</param>
+        /// <param name="contours">All the input contours. Each contour is stored as a point vector.</param>
+        /// <param name="contourIdx">Parameter indicating a contour to draw. If it is negative, all the contours are drawn.</param>
+        /// <param name="color">Color of the contours.</param>
+        /// <param name="thickness">Thickness of lines the contours are drawn with. If it is negative (for example, thickness=CV_FILLED ), 
+        /// the contour interiors are drawn.</param>
+        /// <param name="lineType">Line connectivity. </param>
+        /// <param name="hierarchy">Optional information about hierarchy. It is only needed if you want to draw only some of the contours</param>
+        /// <param name="maxLevel">Maximal level for drawn contours. If it is 0, only the specified contour is drawn. 
+        /// If it is 1, the function draws the contour(s) and all the nested contours. If it is 2, the function draws the contours, 
+        /// all the nested contours, all the nested-to-nested contours, and so on. This parameter is only taken into account 
+        /// when there is hierarchy available.</param>
+        /// <param name="offset">Optional contour shift parameter. Shift all the drawn contours by the specified offset = (dx, dy)</param>
+        /// <returns>image</returns>
+        public NDArray drawContours(NDArray image, IEnumerable<NDArray> contours,
+            int contourIdx,
+            Scalar color,
+            int thickness = 1,
+            LineTypes lineType = LineTypes.Link8,
+            Mat? hierarchy = null,
+            int maxLevel = int.MaxValue,
+            Point? offset = null)
+        {
+            if (!image.CanConvertToMatWithouyCopy())
+            {
+                throw new ValueError("Cannot convert the NDArray to Mat without copy but the method " +
+                    "line needs that. Please consider change the adapter mode.");
+            }
+            Cv2.DrawContours(image.AsMat(), contours.Select(x => x.AsMat()), contourIdx, color, thickness, 
+                lineType, hierarchy, maxLevel, offset);
+            return image;
+        }
+
+        /// <summary>
+        /// Clips the line against the image rectangle
+        /// </summary>
+        /// <param name="imgSize">The image size</param>
+        /// <param name="pt1">The first line point</param>
+        /// <param name="pt2">The second line point</param>
+        /// <returns></returns>
+        public bool clipLine(Size imgSize, ref Point pt1, ref Point pt2)
+        {
+            return Cv2.ClipLine(imgSize, ref pt1, ref pt2);
+        }
+
+        /// <summary>
+        /// Clips the line against the image rectangle
+        /// </summary>
+        /// <param name="imgRect">sThe image rectangle</param>
+        /// <param name="pt1">The first line point</param>
+        /// <param name="pt2">The second line point</param>
+        /// <returns></returns>
+        public bool clipLine(Rect imgRect, ref Point pt1, ref Point pt2)
+        {
+            return Cv2.ClipLine(imgRect, ref pt1, ref pt2);
+        }
+
+        /// <summary>
+        /// Approximates an elliptic arc with a polyline.
+        /// The function ellipse2Poly computes the vertices of a polyline that 
+        /// approximates the specified elliptic arc. It is used by cv::ellipse.
+        /// </summary>
+        /// <param name="center">Center of the arc.</param>
+        /// <param name="axes">Half of the size of the ellipse main axes. See the ellipse for details.</param>
+        /// <param name="angle">Rotation angle of the ellipse in degrees. See the ellipse for details.</param>
+        /// <param name="arcStart">Starting angle of the elliptic arc in degrees.</param>
+        /// <param name="arcEnd">Ending angle of the elliptic arc in degrees.</param>
+        /// <param name="delta">Angle between the subsequent polyline vertices. It defines the approximation</param>
+        /// <returns>Output vector of polyline vertices.</returns>
+        public Point[] ellipse2Poly(Point center, Size axes, int angle,
+            int arcStart, int arcEnd, int delta)
+        {
+            return Cv2.Ellipse2Poly(center, axes, angle, arcStart, arcEnd, delta);
+        }
+
+        /// <summary>
+        /// Approximates an elliptic arc with a polyline.
+        /// The function ellipse2Poly computes the vertices of a polyline that 
+        /// approximates the specified elliptic arc. It is used by cv::ellipse.
+        /// </summary>
+        /// <param name="center">Center of the arc.</param>
+        /// <param name="axes">Half of the size of the ellipse main axes. See the ellipse for details.</param>
+        /// <param name="angle">Rotation angle of the ellipse in degrees. See the ellipse for details.</param>
+        /// <param name="arcStart">Starting angle of the elliptic arc in degrees.</param>
+        /// <param name="arcEnd">Ending angle of the elliptic arc in degrees.</param>
+        /// <param name="delta">Angle between the subsequent polyline vertices. It defines the approximation</param>
+        /// <returns>Output vector of polyline vertices.</returns>
+        public Point2d[] ellipse2Poly(Point2d center, Size2d axes, int angle,
+            int arcStart, int arcEnd, int delta)
+        {
+            return Cv2.Ellipse2Poly(center, axes, angle, arcStart, arcEnd, delta);
+        }
+
+        /// <summary>
+        /// renders text string in the image
+        /// </summary>
+        /// <param name="img">Image.</param>
+        /// <param name="text">Text string to be drawn.</param>
+        /// <param name="org">Bottom-left corner of the text string in the image.</param>
+        /// <param name="fontFace">Font type, see #HersheyFonts.</param>
+        /// <param name="fontScale">Font scale factor that is multiplied by the font-specific base size.</param>
+        /// <param name="color">Text color.</param>
+        /// <param name="thickness">Thickness of the lines used to draw a text.</param>
+        /// <param name="lineType">Line type. See #LineTypes</param>
+        /// <param name="bottomLeftOrigin">When true, the image data origin is at the bottom-left corner.
+        /// Otherwise, it is at the top-left corner.</param>
+        /// <returns>img</returns>
+        public NDArray putText(NDArray img, string text, Point org,
+            HersheyFonts fontFace, double fontScale, Scalar color,
+            int thickness = 1, LineTypes lineType = LineTypes.Link8, bool bottomLeftOrigin = false)
+        {
+            if (!img.CanConvertToMatWithouyCopy())
+            {
+                throw new ValueError("Cannot convert the NDArray to Mat without copy but the method " +
+                    "line needs that. Please consider change the adapter mode.");
+            }
+            Cv2.PutText(img.AsMat(), text, org, fontFace, fontScale, color, thickness, lineType, bottomLeftOrigin);
+            return img;
+        }
+
+        /// <summary>
+        /// returns bounding box of the text string
+        /// </summary>
+        /// <param name="text">Input text string.</param>
+        /// <param name="fontFace">Font to use, see #HersheyFonts.</param>
+        /// <param name="fontScale">Font scale factor that is multiplied by the font-specific base size.</param>
+        /// <param name="thickness">Thickness of lines used to render the text. See #putText for details.</param>
+        /// <param name="baseLine">baseLine y-coordinate of the baseline relative to the bottom-most text</param>
+        /// <returns>The size of a box that contains the specified text.</returns>
+        public Size getTextSize(string text, HersheyFonts fontFace,
+            double fontScale, int thickness, out int baseLine)
+        {
+            return Cv2.GetTextSize(text, fontFace, fontScale, thickness, out baseLine);
+        }
+
+        /// <summary>
+        /// Calculates the font-specific size to use to achieve a given height in pixels.
+        /// </summary>
+        /// <param name="fontFace">Font to use, see cv::HersheyFonts.</param>
+        /// <param name="pixelHeight">Pixel height to compute the fontScale for</param>
+        /// <param name="thickness">Thickness of lines used to render the text.See putText for details.</param>
+        /// <returns>The fontSize to use for cv::putText</returns>
+        public double getFontScaleFromHeight(HersheyFonts fontFace, int pixelHeight, int thickness = 1)
+        {
+            return Cv2.GetFontScaleFromHeight(fontFace, pixelHeight, thickness);
         }
     }
 }
