@@ -26,6 +26,11 @@ namespace Tensorflow.OpencvAdapter.Extensions
             }
         }
 
+        public static bool CanConvertToMatWithouyCopy(this NDArray array)
+        {
+            return CvNDArray.AdapterMode != OpencvAdapterMode.StrictNoCopy;
+        }
+
         internal static InputArray? ToInputArray(this NDArray? array)
         {
             if(array is null)
