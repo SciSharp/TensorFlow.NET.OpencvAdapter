@@ -36,7 +36,7 @@ img = cv2.resize(img, new Size(2, 3));
 
 Currently the Tensorflow.OpencvAdapter has not been published. It will be published along with `Tensorflow.NET v1.0.0`.
 
-## TODO List
+## API progress rate
 
 - [x] Conversion between `Mat` and `NDArray`
 - [x] cv2.core APIs
