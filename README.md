@@ -5,9 +5,9 @@ An efficient library which enables using tensorflow.net with opencvsharp. It reu
 
 [Tensorflow.NET](https://github.com/SciSharp/TensorFlow.NET) is the dotnet binding of tensorflow, which is a deep-learning framework. [OpencvSharp](https://github.com/shimat/opencvsharp) is a good framework to provide opencv APIs in .NET. 
 
-Tensorflow.NET uses `NDArray/Tensor` as data structure, while OpencvSharp uses `Mat` as data structure. This once became a gap between Tensorflow.NET and OpencvSharp, leading to some inconvenience for CV works with Tensorflow.NET.
+Tensorflow.NET uses `NDArray/Tensor` as data structure, while OpencvSharp uses `Mat` as data structure. This once became a gap between Tensorflow.NET and OpencvSharp, causing some inconvenience for CV works with Tensorflow.NET.
 
-Tensorflow.OpencvAdapter is to make the two libraries compatible, and provide an extra set API with Tensorflow.NET style. With Tensorflow.OpencvAdapter, a `Mat` can be converted to a NDArray without memory copying and vice versa.
+The aim of Tensorflow.OpencvAdapter is to make the two libraries compatible, and provide an extra set API with Tensorflow.NET style. With Tensorflow.OpencvAdapter, a `Mat` can be converted to a NDArray without memory copying and vice versa.
 
 ## Usages
 
